@@ -36,7 +36,7 @@ func addtaskHandler(ui *ui, app *app) {
 	ui.app.SetFocus(taskForm)
 }
 
-func (a *app) createDeleteTable() (*tview.Table, []*tview.TableCell) {
+func (a *app) createTaskTableWithCells() (*tview.Table, []*tview.TableCell) {
 	table := tview.NewTable().
 		SetBorders(true)
 	word := 0
@@ -85,9 +85,7 @@ func (a *app) createDeleteTable() (*tview.Table, []*tview.TableCell) {
 func deleteTaskHandler(ui *ui, app *app) {
 	ui.output.Clear()
 	//generate task menu for deletion
-	deleteMenu, cells := app.createDeleteTable()
-	deleteMenu.GetSelectable()
-	// rows :=
+	deleteMenu, cells := app.createTaskTableWithCells()
 	taskList := app.listInsertionOrder()
 	taskMap := make(map[rune]*task)
 	r := 'a'
@@ -120,4 +118,41 @@ func deleteTaskHandler(ui *ui, app *app) {
 	//reset
 	ui.output.AddItem(deleteMenu, 0, 2, true)
 	ui.app.SetFocus(deleteMenu)
+}
+func updateTaskHandler(ui *ui, app *app) {
+	ui.output.Clear()
+	//generate task menu for deletion
+	updateMenu, cells := app.createTaskTableWithCells()
+	taskList := app.listInsertionOrder()
+	taskMap := make(map[rune]*task)
+	r := 'a'
+	for idx, t := range taskList {
+		cell := cells[idx]
+		taskMap[r] = t
+		cell.SetText(string(r) + ") " + cell.Text)
+		r += 1
+		if r == 'z'+1 {
+			r = 'A'
+		}
+	}
+	var selectedTask rune
+	//run delete task function
+	updateMenu.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Rune() == rune(tcell.KeyEnter) {
+			if selectedTask == 0 {
+				return event
+			}
+			t, ok := taskMap[selectedTask]
+			if ok {
+				updateTask(app, t)
+			}
+			ui.ResetUi(app)
+		} else {
+			selectedTask = event.Rune()
+		}
+		return event
+	})
+	//reset
+	ui.output.AddItem(updateMenu, 0, 2, true)
+	ui.app.SetFocus(updateMenu)
 }

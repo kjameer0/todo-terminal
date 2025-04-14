@@ -154,6 +154,7 @@ func generateOptionsHandlers(ui *ui, app *app) []handler {
 		},
 		{"Add Task", 'b', func() { addtaskHandler(ui, app) }},
 		{"Delete Task", 'c', func() { deleteTaskHandler(ui, app) }},
+		{"Update Task", 'd', func() { updateTaskHandler(ui, app) }},
 	}
 	return handlers
 }
