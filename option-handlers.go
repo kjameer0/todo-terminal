@@ -40,17 +40,7 @@ func (a *app) createTaskTableWithCells() (*tview.Table, []*tview.TableCell) {
 	table := tview.NewTable().
 		SetBorders(true)
 	word := 0
-	tasks := []*task{}
-	for _, t := range a.InsertionOrder {
-		curTask := a.Tasks[t]
-		if !a.config.ShowComplete && curTask.Completed {
-			continue
-		}
-		if time.Now().Compare(curTask.BeginDate) == -1 {
-			continue
-		}
-		tasks = append(tasks, curTask)
-	}
+	tasks := a.listIncompleteInsertionOrder()
 	if len(tasks) == 0 {
 		table.SetCell(0, 0,
 			tview.NewTableCell("No tasks in list").
@@ -86,7 +76,7 @@ func deleteTaskHandler(ui *ui, app *app) {
 	ui.output.Clear()
 	//generate task menu for deletion
 	deleteMenu, cells := app.createTaskTableWithCells()
-	taskList := app.listInsertionOrder()
+	taskList := app.listIncompleteInsertionOrder()
 	taskMap := make(map[rune]*task)
 	r := 'a'
 	for idx, t := range taskList {
@@ -123,7 +113,7 @@ func updateTaskHandler(ui *ui, app *app) {
 	ui.output.Clear()
 	//generate task menu for deletion
 	updateMenu, cells := app.createTaskTableWithCells()
-	taskList := app.listInsertionOrder()
+	taskList := app.listIncompleteInsertionOrder()
 	taskMap := make(map[rune]*task)
 	r := 'a'
 	for idx, t := range taskList {

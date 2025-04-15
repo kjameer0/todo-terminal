@@ -73,6 +73,20 @@ func (a *app) listInsertionOrder() []*task {
 	}
 	return items
 }
+func (a *app) listIncompleteInsertionOrder() []*task {
+	tasks := []*task{}
+	for _, t := range a.InsertionOrder {
+		curTask := a.Tasks[t]
+		if !a.config.ShowComplete && curTask.Completed {
+			continue
+		}
+		if time.Now().Compare(curTask.BeginDate) == -1 {
+			continue
+		}
+		tasks = append(tasks, curTask)
+	}
+	return tasks
+}
 
 type ui struct {
 	app         *tview.Application
@@ -181,10 +195,18 @@ func main() {
 		action := opt.Action
 		optionsMenu.AddItem(opt.Label, "", opt.Shortcut, action)
 	}
-
+	output.AddItem(a.createTaskTable(), 0, 1, false)
+	message := tview.NewTextView().SetText("Message")
 	layout := tview.NewFlex().AddItem(optionsMenu, 0, 1, true).
-		AddItem(output.AddItem(a.createTaskTable(), 0, 1, false), 0, 2, false)
-	if err := tApp.SetRoot(layout, true).EnableMouse(true).Run(); err != nil {
+		AddItem(output, 0, 2, false)
+	grid := tview.NewGrid().
+		SetRows(1, 3).
+		SetColumns(20).
+		SetBorders(true).
+		AddItem(message, 0, 0, 1, 10, 0, 0, false).
+		AddItem(layout, 1, 0, 4, 10, 0, 0, true)
+
+	if err := tApp.SetRoot(grid, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
 }
