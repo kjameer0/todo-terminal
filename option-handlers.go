@@ -21,6 +21,7 @@ func addtaskHandler(ui *ui, app *app) {
 
 	taskForm.AddButton("Submit", func() {
 		addTask(app, nameVal, addDayToDate(time.Now(), dateIdx))
+		ui.messageContainer.SetText("Task Added").SetTextColor(tcell.ColorDarkGreen)
 		ui.ResetUi(app)
 	})
 
@@ -56,9 +57,10 @@ func (a *app) createTaskTableWithCells() (*tview.Table, []*tview.TableCell) {
 			if word < len(tasks) {
 				text = tasks[word].String()
 			}
-			cell := tview.NewTableCell(text)
+			cell := tview.NewTableCell(wrapText(text, 10))
 			table.SetCell(r, c,
-				cell.
+				cell.SetExpansion(1).
+					SetMaxWidth(20).
 					SetTextColor(color).
 					SetAlign(tview.AlignCenter))
 			cells = append(cells, cell)
@@ -98,6 +100,7 @@ func deleteTaskHandler(ui *ui, app *app) {
 			t, ok := taskMap[selectedTask]
 			if ok {
 				removeTask(app, t.Id)
+				ui.messageContainer.SetText("Task Deleted").SetTextColor(tcell.ColorYellow)
 			}
 			ui.ResetUi(app)
 		} else {
@@ -135,6 +138,7 @@ func updateTaskHandler(ui *ui, app *app) {
 			t, ok := taskMap[selectedTask]
 			if ok {
 				updateTask(app, t)
+				ui.messageContainer.SetText("Task Updated").SetTextColor(tcell.ColorYellow)
 			}
 			ui.ResetUi(app)
 		} else {

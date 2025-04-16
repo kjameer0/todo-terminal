@@ -10,6 +10,17 @@ import (
 	"github.com/rivo/tview"
 )
 
+func wrapText(s string, limit int) string {
+	var result string
+	for i, char := range s {
+		if i > 0 && i%limit == 0 {
+			result += "\n"
+		}
+		result += string(char)
+	}
+	return result
+}
+
 type taskDate struct {
 	t time.Time
 }
@@ -59,6 +70,11 @@ func newTask(name string, completed bool, beginDate time.Time) *task {
 	return t
 }
 
+type messageText struct {
+	text  string
+	color tcell.Color
+}
+
 func exitCleanup(a *app) {
 	os.Exit(0)
 }
@@ -89,9 +105,10 @@ func (a *app) listIncompleteInsertionOrder() []*task {
 }
 
 type ui struct {
-	app         *tview.Application
-	optionsMenu *tview.List
-	output      *tview.Flex
+	app              *tview.Application
+	optionsMenu      *tview.List
+	output           *tview.Flex
+	messageContainer *tview.TextView
 }
 
 func (a *app) createTaskTable() *tview.Table {
@@ -124,7 +141,7 @@ func (a *app) createTaskTable() *tview.Table {
 				text = tasks[word].String()
 			}
 			table.SetCell(r, c,
-				tview.NewTableCell(text).
+				tview.NewTableCell(wrapText(text, 10)).
 					SetTextColor(color).
 					SetAlign(tview.AlignCenter))
 			word = (word + 1)
@@ -197,6 +214,7 @@ func main() {
 	}
 	output.AddItem(a.createTaskTable(), 0, 1, false)
 	message := tview.NewTextView().SetText("Message")
+	ui.messageContainer = message
 	layout := tview.NewFlex().AddItem(optionsMenu, 0, 1, true).
 		AddItem(output, 0, 2, false)
 	grid := tview.NewGrid().
@@ -206,6 +224,14 @@ func main() {
 		AddItem(message, 0, 0, 1, 10, 0, 0, false).
 		AddItem(layout, 1, 0, 4, 10, 0, 0, true)
 
+	message.SetChangedFunc(func() {
+		if message.GetText(true) == "Message" {
+			return
+		}
+		<-time.After(time.Second * 2)
+		message.SetText("Message").SetTextColor(tcell.ColorWhite)
+		ui.app.Draw()
+	})
 	if err := tApp.SetRoot(grid, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
