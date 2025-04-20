@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
+// if completion date is zero value then the task is incomplete
 type task struct {
 	Id             string    `json:"id"`
 	Name           string    `json:"name"`
-	Completed      bool      `json:"completed"`
 	CompletionDate time.Time `json:"completionDate"`
 	BeginDate      time.Time `json:"beginDate"`
 }
@@ -16,6 +16,7 @@ type task struct {
 func (t *task) isComplete() bool {
 	return !t.CompletionDate.IsZero()
 }
+
 func (t *task) String() string {
 	var completed string
 	if !t.isComplete() {
@@ -31,12 +32,14 @@ func (t *task) String() string {
 	}
 	return fmt.Sprintf("%s %s %s", t.Name, completed, completionDate)
 }
+
 func addTask(a *app, taskText string, beginTime time.Time) {
-	addedTask := newTask(taskText, false, beginTime)
+	addedTask := newTask(taskText, beginTime)
 	a.Tasks[addedTask.Id] = addedTask
 	a.InsertionOrder = append(a.InsertionOrder, addedTask.Id)
 	saveToFile(a)
 }
+
 func removeTask(a *app, taskId string) bool {
 	if _, ok := a.Tasks[taskId]; !ok {
 		fmt.Println("hi")
@@ -55,11 +58,13 @@ func removeTask(a *app, taskId string) bool {
 	saveToFile(a)
 	return true
 }
+
 func removeAllTasks(a *app) {
 	a.InsertionOrder = []string{}
 	clear(a.Tasks)
 	saveToFile(a)
 }
+
 func listTasks(a *app) []string {
 	tasks := []string{}
 	for _, taskId := range a.InsertionOrder {
@@ -88,6 +93,7 @@ func listTasks(a *app) []string {
 	}
 	return tasks
 }
+
 func updateTask(a *app, t *task) {
 	var zeroTime time.Time
 	if !t.isComplete() {

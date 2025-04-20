@@ -39,9 +39,10 @@ func addtaskHandler(ui *ui, app *app) {
 
 func (a *app) createTaskTableWithCells() (*tview.Table, []*tview.TableCell) {
 	table := tview.NewTable().
-		SetBorders(true)
-	word := 0
-	tasks := a.listIncompleteInsertionOrder()
+		SetBorders(true).SetSelectable(false, false)
+	showComplete := true
+	showFutureTasks := false
+	tasks := a.listInsertionOrder(showComplete, showFutureTasks)
 	if len(tasks) == 0 {
 		table.SetCell(0, 0,
 			tview.NewTableCell("No tasks in list").
@@ -49,27 +50,37 @@ func (a *app) createTaskTableWithCells() (*tview.Table, []*tview.TableCell) {
 				SetAlign(tview.AlignCenter).SetSelectable(false))
 	}
 	cells := []*tview.TableCell{}
-	cols, rows := 1, len(tasks)
-	for r := 0; r < int(rows); r++ {
-		for c := 0; c < int(cols); c++ {
+	headers := []string{"ID", "Task", "Status"}
+	for i, h := range headers {
+		table.SetCell(0, i,
+			tview.NewTableCell(h).
+				SetTextColor(tcell.ColorYellow).
+				SetAlign(tview.AlignCenter).
+				SetSelectable(false))
+	}
+
+	for r := 1; r < len(tasks)+1; r++ {
+		t := tasks[r-1]
+		complete := ""
+		if t.isComplete() {
+			complete = "yes"
+		} else {
+			complete = "no"
+		}
+		fields := []string{"key", t.Name, complete}
+		for c := 0; c < len(headers); c++ {
 			color := tcell.ColorWhite
-			text := ""
-			if word < len(tasks) {
-				text = tasks[word].String()
-			}
-			cell := tview.NewTableCell(wrapText(text, 10))
+			cell := tview.NewTableCell(fields[c])
 			table.SetCell(r, c,
 				cell.SetExpansion(1).
-					SetMaxWidth(20).
 					SetTextColor(color).
 					SetAlign(tview.AlignCenter))
 			cells = append(cells, cell)
-			word = (word + 1)
 		}
 	}
 	table.Select(0, 0).SetFixed(1, 1).SetSelectedFunc(func(row int, column int) {
 		table.GetCell(row, column).SetTextColor(tcell.ColorRed)
-		table.SetSelectable(false, false)
+		table.SetSelectable(true, false)
 	})
 	return table, cells
 }
@@ -77,14 +88,16 @@ func (a *app) createTaskTableWithCells() (*tview.Table, []*tview.TableCell) {
 func deleteTaskHandler(ui *ui, app *app) {
 	ui.output.Clear()
 	//generate task menu for deletion
-	deleteMenu, cells := app.createTaskTableWithCells()
-	taskList := app.listIncompleteInsertionOrder()
+	deleteMenu, _ := app.createTaskTableWithCells()
+	showComplete := true
+	showFutureTasks := false
+	taskList := app.listInsertionOrder(showComplete, showFutureTasks)
 	taskMap := make(map[rune]*task)
 	r := 'a'
 	for idx, t := range taskList {
-		cell := cells[idx]
+		cell := deleteMenu.GetCell(idx+1, 0)
 		taskMap[r] = t
-		cell.SetText(string(r) + ") " + cell.Text)
+		cell.SetText(string(r) + ") ")
 		r += 1
 		if r == 'z'+1 {
 			r = 'A'
@@ -116,7 +129,9 @@ func updateTaskHandler(ui *ui, app *app) {
 	ui.output.Clear()
 	//generate task menu for deletion
 	updateMenu, cells := app.createTaskTableWithCells()
-	taskList := app.listIncompleteInsertionOrder()
+	showComplete := true
+	showFutureTasks := false
+	taskList := app.listInsertionOrder(showComplete, showFutureTasks)
 	taskMap := make(map[rune]*task)
 	r := 'a'
 	for idx, t := range taskList {

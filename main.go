@@ -57,7 +57,7 @@ func newApp() *app {
 	return &app{Tasks: tasks}
 }
 
-func newTask(name string, completed bool, beginDate time.Time) *task {
+func newTask(name string, beginDate time.Time) *task {
 	if name == "" {
 		log.Fatal("a task must have a name")
 	}
@@ -66,7 +66,7 @@ func newTask(name string, completed bool, beginDate time.Time) *task {
 	if err != nil {
 		log.Fatal(err)
 	}
-	t := &task{Id: taskId, Name: name, Completed: completed, BeginDate: beginDate}
+	t := &task{Id: taskId, Name: name, BeginDate: beginDate}
 	return t
 }
 
@@ -79,24 +79,14 @@ func exitCleanup(a *app) {
 	os.Exit(0)
 }
 
-func (a *app) listInsertionOrder() []*task {
-	items := []*task{}
-	for _, item := range a.InsertionOrder {
-		taskItem, ok := a.Tasks[item]
-		if ok {
-			items = append(items, taskItem)
-		}
-	}
-	return items
-}
-func (a *app) listIncompleteInsertionOrder() []*task {
-	tasks := []*task{}
+func (a *app) listInsertionOrder(showComplete bool, showFutureTasks bool) []*task {
+	tasks := make([]*task, 0, len(a.InsertionOrder))
 	for _, t := range a.InsertionOrder {
 		curTask := a.Tasks[t]
-		if !a.config.ShowComplete && curTask.Completed {
+		if !showComplete && curTask.isComplete() {
 			continue
 		}
-		if time.Now().Compare(curTask.BeginDate) == -1 {
+		if time.Now().Compare(curTask.BeginDate) == -1 && showFutureTasks {
 			continue
 		}
 		tasks = append(tasks, curTask)
@@ -115,17 +105,9 @@ func (a *app) createTaskTable() *tview.Table {
 	table := tview.NewTable().
 		SetBorders(true)
 	word := 0
-	tasks := []*task{}
-	for _, t := range a.InsertionOrder {
-		curTask := a.Tasks[t]
-		if !a.config.ShowComplete && curTask.Completed {
-			continue
-		}
-		if time.Now().Compare(curTask.BeginDate) == -1 {
-			continue
-		}
-		tasks = append(tasks, curTask)
-	}
+	showComplete := false
+	showFutureTasks := false
+	tasks := a.listInsertionOrder(showComplete, showFutureTasks)
 	if len(tasks) == 0 {
 		table.SetCell(0, 0,
 			tview.NewTableCell("No tasks in list").
@@ -180,7 +162,8 @@ func generateOptionsHandlers(ui *ui, app *app) []handler {
 	output := ui.output
 	handlers := []handler{
 		{"List Tasks", 'a', func() {
-			output.Clear().AddItem(app.createTaskTable(), 0, 1, false)
+			cells, _ := app.createTaskTableWithCells()
+			output.Clear().AddItem(cells, 0, 1, false)
 		},
 		},
 		{"Add Task", 'b', func() { addtaskHandler(ui, app) }},
@@ -212,18 +195,17 @@ func main() {
 		action := opt.Action
 		optionsMenu.AddItem(opt.Label, "", opt.Shortcut, action)
 	}
-	output.AddItem(a.createTaskTable(), 0, 1, false)
+	table, _ := a.createTaskTableWithCells()
+	output.AddItem(table, 0, 1, false)
 	message := tview.NewTextView().SetText("Message")
+	message.SetBorder(false)
 	ui.messageContainer = message
 	layout := tview.NewFlex().AddItem(optionsMenu, 0, 1, true).
-		AddItem(output, 0, 2, false)
+		AddItem(output, 0, 4, false)
 	grid := tview.NewGrid().
-		SetRows(1, 3).
-		SetColumns(20).
-		SetBorders(true).
-		AddItem(message, 0, 0, 1, 10, 0, 0, false).
-		AddItem(layout, 1, 0, 4, 10, 0, 0, true)
-
+		SetColumns(10).
+		AddItem(message, 0, 0, 1, 3, 0, 0, false).
+		AddItem(layout, 1, 0, 4, 60, 0, 0, true)
 	message.SetChangedFunc(func() {
 		if message.GetText(true) == "Message" {
 			return
