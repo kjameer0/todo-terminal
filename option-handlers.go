@@ -128,16 +128,16 @@ func deleteTaskHandler(ui *ui, app *app) {
 func updateTaskHandler(ui *ui, app *app) {
 	ui.output.Clear()
 	//generate task menu for deletion
-	updateMenu, cells := app.createTaskTableWithCells()
+	updateMenu, _ := app.createTaskTableWithCells()
 	showComplete := true
 	showFutureTasks := false
 	taskList := app.listInsertionOrder(showComplete, showFutureTasks)
 	taskMap := make(map[rune]*task)
 	r := 'a'
 	for idx, t := range taskList {
-		cell := cells[idx]
+		cell := updateMenu.GetCell(idx+1, 0)
 		taskMap[r] = t
-		cell.SetText(string(r) + ") " + cell.Text)
+		cell.SetText(string(r) + ") ")
 		r += 1
 		if r == 'z'+1 {
 			r = 'A'
