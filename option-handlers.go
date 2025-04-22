@@ -37,11 +37,9 @@ func addtaskHandler(ui *ui, app *app) {
 	ui.app.SetFocus(taskForm)
 }
 
-func (a *app) createTaskTableWithCells() (*tview.Table, []*tview.TableCell) {
+func (a *app) createTaskTableWithCells(showComplete bool, showFutureTasks bool) (*tview.Table, []*tview.TableCell) {
 	table := tview.NewTable().
 		SetBorders(true).SetSelectable(false, false)
-	showComplete := true
-	showFutureTasks := false
 	tasks := a.listInsertionOrder(showComplete, showFutureTasks)
 	if len(tasks) == 0 {
 		table.SetCell(0, 0,
@@ -88,7 +86,7 @@ func (a *app) createTaskTableWithCells() (*tview.Table, []*tview.TableCell) {
 func deleteTaskHandler(ui *ui, app *app) {
 	ui.output.Clear()
 	//generate task menu for deletion
-	deleteMenu, _ := app.createTaskTableWithCells()
+	deleteMenu, _ := app.createTaskTableWithCells(true, true)
 	showComplete := true
 	showFutureTasks := false
 	taskList := app.listInsertionOrder(showComplete, showFutureTasks)
@@ -128,7 +126,7 @@ func deleteTaskHandler(ui *ui, app *app) {
 func updateTaskHandler(ui *ui, app *app) {
 	ui.output.Clear()
 	//generate task menu for deletion
-	updateMenu, _ := app.createTaskTableWithCells()
+	updateMenu, _ := app.createTaskTableWithCells(false, true)
 	showComplete := true
 	showFutureTasks := false
 	taskList := app.listInsertionOrder(showComplete, showFutureTasks)

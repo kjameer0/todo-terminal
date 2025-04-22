@@ -162,7 +162,7 @@ func generateOptionsHandlers(ui *ui, app *app) []handler {
 	output := ui.output
 	handlers := []handler{
 		{"List Tasks", 'a', func() {
-			cells, _ := app.createTaskTableWithCells()
+			cells, _ := app.createTaskTableWithCells(false, false)
 			output.Clear().AddItem(cells, 0, 1, false)
 		},
 		},
@@ -195,7 +195,7 @@ func main() {
 		action := opt.Action
 		optionsMenu.AddItem(opt.Label, "", opt.Shortcut, action)
 	}
-	table, _ := a.createTaskTableWithCells()
+	table, _ := a.createTaskTableWithCells(false, false)
 	output.AddItem(table, 0, 1, false)
 	message := tview.NewTextView().SetText("Message")
 	message.SetBorder(false)
