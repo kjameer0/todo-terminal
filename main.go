@@ -70,11 +70,6 @@ func newTask(name string, beginDate time.Time) *task {
 	return t
 }
 
-type messageText struct {
-	text  string
-	color tcell.Color
-}
-
 func exitCleanup(a *app) {
 	os.Exit(0)
 }
@@ -163,7 +158,26 @@ func generateOptionsHandlers(ui *ui, app *app) []handler {
 	handlers := []handler{
 		{"List Tasks", 'a', func() {
 			cells, _ := app.createTaskTableWithCells(false, false)
-			output.Clear().AddItem(cells, 0, 1, false)
+			l := app.listInsertionOrder(false, false)
+			taskMap := createShortCutMap(cells, l)
+			var selectedTask rune
+			cells.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+				if event.Rune() == rune(tcell.KeyEnter) {
+					if selectedTask == 0 {
+						return event
+					}
+					t, ok := taskMap[selectedTask]
+					if ok {
+						ui.messageContainer.SetText(t.Name + " was selected").SetTextColor(tcell.ColorGreen)
+					}
+					ui.ResetUi(app)
+				} else {
+					selectedTask = event.Rune()
+				}
+				return event
+			})
+			output.Clear().AddItem(cells, 0, 2, true)
+			ui.app.SetFocus(cells)
 		},
 		},
 		{"Add Task", 'b', func() { addtaskHandler(ui, app) }},
@@ -204,7 +218,7 @@ func main() {
 		AddItem(output, 0, 4, false)
 	grid := tview.NewGrid().
 		SetColumns(10).
-		AddItem(message, 0, 0, 1, 3, 0, 0, false).
+		AddItem(message, 0, 0, 1, 10, 0, 0, false).
 		AddItem(layout, 1, 0, 4, 60, 0, 0, true)
 	message.SetChangedFunc(func() {
 		if message.GetText(true) == "Message" {

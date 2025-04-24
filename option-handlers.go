@@ -90,17 +90,7 @@ func deleteTaskHandler(ui *ui, app *app) {
 	showComplete := true
 	showFutureTasks := false
 	taskList := app.listInsertionOrder(showComplete, showFutureTasks)
-	taskMap := make(map[rune]*task)
-	r := 'a'
-	for idx, t := range taskList {
-		cell := deleteMenu.GetCell(idx+1, 0)
-		taskMap[r] = t
-		cell.SetText(string(r) + ") ")
-		r += 1
-		if r == 'z'+1 {
-			r = 'A'
-		}
-	}
+	taskMap := createShortCutMap(deleteMenu, taskList)
 	var selectedTask rune
 	//run delete task function
 	deleteMenu.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -130,17 +120,7 @@ func updateTaskHandler(ui *ui, app *app) {
 	showComplete := true
 	showFutureTasks := false
 	taskList := app.listInsertionOrder(showComplete, showFutureTasks)
-	taskMap := make(map[rune]*task)
-	r := 'a'
-	for idx, t := range taskList {
-		cell := updateMenu.GetCell(idx+1, 0)
-		taskMap[r] = t
-		cell.SetText(string(r) + ") ")
-		r += 1
-		if r == 'z'+1 {
-			r = 'A'
-		}
-	}
+	taskMap := createShortCutMap(updateMenu, taskList)
 	var selectedTask rune
 	//run delete task function
 	updateMenu.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -163,3 +143,20 @@ func updateTaskHandler(ui *ui, app *app) {
 	ui.output.AddItem(updateMenu, 0, 2, true)
 	ui.app.SetFocus(updateMenu)
 }
+
+func createShortCutMap[T any](table *tview.Table, items []T) map[rune]T {
+	keyMap := make(map[rune]T, len(items))
+	r := 'a'
+	for idx, t := range items {
+		cell := table.GetCell(idx+1, 0)
+		keyMap[r] = t
+		cell.SetText(string(r) + ") ")
+		r += 1
+		if r == 'z'+1 {
+			r = 'A'
+		}
+	}
+	return keyMap
+}
+
+
